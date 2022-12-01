@@ -76,3 +76,6 @@ clean:
 	$(RM) inc/*.o
 	$(RM) *.elf
 	$(RM) *.lst
+
+upload:
+	openocd -f ./openocd_rs41.cfg -c "program $(TARGET).elf verify reset exit"
