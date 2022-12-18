@@ -158,35 +158,35 @@ int main(void)
 		HAL_Delay(10000);
 		//Configure the GPS-IC to generate a GPS synchronized 10MHz clock on pin 39
 		//The 10MHz signal is only generated if the synchronisation was successful
-		payload[0] = 0x00;
-		payload[1] = 0x01;
-		payload[2] = 0x00;
+		payload[0] = 0x00;  // U1 Time-pulse 1
+		payload[1] = 0x01;  // U1 reserved
+		payload[2] = 0x00;  // U2 reserved
 		payload[3] = 0x00;
-		payload[4] = 0x00;
+		payload[4] = 0x00;  // I2 cable delay (ns)
 		payload[5] = 0x00;
-		payload[6] = 0x00;
+		payload[6] = 0x00;  // I2 RF group delay (ns)
 		payload[7] = 0x00;
-		payload[8] = 0x04;
+		payload[8] = 0x04;  // U4 freq or period (Hz / us)
 		payload[9] = 0x00;
 		payload[10] = 0x00;
 		payload[11] = 0x00;
-		payload[12] = 0x80;
+		payload[12] = 0x80; // U4 freq or period of locked (Hz / us)
 		payload[13] = 0x96;
 		payload[14] = 0x98;
 		payload[15] = 0x00;
-		payload[16] = 0x00;
+		payload[16] = 0x00;  // U4 pulse len ration (us or 2^-32)
 		payload[17] = 0x00;
 		payload[18] = 0x00;
 		payload[19] = 0x00;
-		payload[20] = 0x00;
+		payload[20] = 0x00; // U4 pulse ratio lock (us or 2^-32)
 		payload[21] = 0x00;
 		payload[22] = 0x00;
 		payload[23] = 0x80;
-		payload[24] = 0x00;
+		payload[24] = 0x00; // I4 user configurable time pulse delay (ns)
 		payload[25] = 0x00;
 		payload[26] = 0x00;
 		payload[27] = 0x00;
-		payload[28] = 0x6F;
+		payload[28] = 0x6F; // X4 flags
 		payload[29] = 0x08;
 		payload[30] = 0x00;
 		payload[31] = 0x00;
