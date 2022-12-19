@@ -27,7 +27,9 @@ CFLAGS += -I./Drivers/CMSIS/Include
 
 CFLAGS += -DSTM32F100xB=1
 
-LSCRIPT = ./ld/stm32.ld
+#LSCRIPT = ./ld/stm32.ld
+#LSCRIPT = ./ld/arm-gcc-link.ld
+LSCRIPT = ./ld/STM32F100XB_FLASH.ld
 LDFLAGS += -Wl,-T$(LSCRIPT)
 
 OBJS = Src/main.o Src/stm32f1xx_hal_msp.o Src/stm32f1xx_it.o Src/system_stm32f1xx.o
