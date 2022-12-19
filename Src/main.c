@@ -200,23 +200,26 @@ int main(void)
 
   /* USER CODE END WHILE */
 		//The flashing red LED showes that the device is ready to generate a clock signal
-		HAL_GPIO_WritePin(GPIOB, LED_red_Pin, GPIO_PIN_SET);
-		HAL_Delay(500);
-		HAL_GPIO_WritePin(GPIOB, LED_red_Pin, GPIO_PIN_RESET);
-		HAL_Delay(500);
-		
-		/*
-		strcpy(data, "Test message\x0d\x0a");
-		HAL_UART_Transmit(&huart3,(uint8_t*) data, strlen(data), HAL_MAX_DELAY);*/
-		
-		//Debuging: Receives data from the GPS-IC and sends it to the terminal connected to UART3 (can be decoded by u-center)
-		HAL_UART_Receive(&huart1, buffer, 70, HAL_MAX_DELAY);
-		HAL_UART_Transmit(&huart3, buffer, 70, HAL_MAX_DELAY);
-  /* USER CODE BEGIN 3 */
+    if ((HAL_GetTick() % HAL_GetTickFreq()) > (HAL_GetTickFreq() / 2)) {
+      HAL_GPIO_WritePin(GPIOB, LED_red_Pin, GPIO_PIN_SET);
+    } else {
+      HAL_GPIO_WritePin(GPIOB, LED_red_Pin, GPIO_PIN_RESET);
+    }
 
+    // Copy data from huart1 to uart3
+    if (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE)) {
+      uint8_t d = (uint8_t)(huart1.Instance->DR & (uint8_t)0x00FF);
+      while (!__HAL_UART_GET_FLAG(&huart3, UART_FLAG_TXE)) {}
+      huart3.Instance->DR = d;
+    }
+
+    // Copy data from huart3 to uart1
+    if (__HAL_UART_GET_FLAG(&huart3, UART_FLAG_RXNE)) {
+      uint8_t d = (uint8_t)(huart3.Instance->DR & (uint8_t)0x00FF);
+      while (!__HAL_UART_GET_FLAG(&huart1, UART_FLAG_TXE)) {}
+      huart1.Instance->DR = d;
+    }
   }
-  /* USER CODE END 3 */
-
 }
 
 /**
