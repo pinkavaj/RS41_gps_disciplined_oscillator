@@ -54,6 +54,12 @@
 #define UBX_CFG_NAV5_MASK_DGPSMASK (1 << 7)
 
 typedef struct __attribute__((__packed__)) {
+  uint8_t msgClass;
+  uint8_t msgID;
+  uint8_t rate;
+} UBX_CFG_MSG;
+
+typedef struct __attribute__((__packed__)) {
   uint16_t mask;
   uint8_t dynModel;
   uint8_t fixMode;
@@ -241,6 +247,20 @@ int main(void)
     .staticHoldThresh = 0,
   };
   tx_ublox(&huart1, 0x06, 0x24, (uint8_t *)&ubxCfgNav5, sizeof(ubxCfgNav5));
+
+  const UBX_CFG_MSG ubxCfgMsgGRS = {
+    .msgClass = 0xF0,
+    .msgID = 0x07,
+    .rate = 1,
+  };
+  tx_ublox(&huart1, 0x06, 0x01, (uint8_t *)&ubxCfgMsgGRS, sizeof(ubxCfgMsgGRS));
+
+  const UBX_CFG_MSG ubxCfgMsgGST = {
+    .msgClass = 0xF0,
+    .msgID = 0x06,
+    .rate = 1,
+  };
+  tx_ublox(&huart1, 0x06, 0x01, (uint8_t *)&ubxCfgMsgGST, sizeof(ubxCfgMsgGST));
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
