@@ -47,7 +47,7 @@ if __name__=='__main__':
         time_str = datetime.utcnow().strftime("%Y-%m-%dT%H-%M-%S")
         log_rotate_timestamp = datetime.utcnow().timestamp() + LOG_ROTATE_SEC
         with open(out_fname + f"{time_str}_nmea.txt", "wt") as out_nmea, \
-                open(out_fname + f"{time_str}_junk.bin", "wt") as out_junk:
+                open(out_fname + f"{time_str}_junk.txt", "wt") as out_junk:
             while True:
                 if datetime.utcnow().timestamp() >= log_rotate_timestamp:
                     break
@@ -61,4 +61,4 @@ if __name__=='__main__':
                     out_nmea.write("\n")
                 else:
                     time_str = datetime.utcnow().strftime("%Y-%m-%dT%H-%M-%S")
-                    out_junk.write("{time_str}: {repr(line)}\n")
+                    out_junk.write(f"{time_str}: {repr(line)}\n")
