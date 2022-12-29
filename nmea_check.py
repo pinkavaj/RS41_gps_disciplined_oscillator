@@ -2,6 +2,8 @@
 
 from datetime import datetime
 import sys
+from os.path import getsize
+from os import remove
 
 import serial
 
@@ -46,8 +48,9 @@ if __name__=='__main__':
     while True:
         time_str = datetime.utcnow().strftime("%Y-%m-%dT%H-%M-%S")
         log_rotate_timestamp = datetime.utcnow().timestamp() + LOG_ROTATE_SEC
+        junk_fname = out_fname + f"{time_str}_junk.txt"
         with open(out_fname + f"{time_str}_nmea.txt", "wt") as out_nmea, \
-                open(out_fname + f"{time_str}_junk.txt", "wt") as out_junk:
+                open(junk_fname, "wt") as out_junk:
             while True:
                 if datetime.utcnow().timestamp() >= log_rotate_timestamp:
                     break
@@ -62,3 +65,5 @@ if __name__=='__main__':
                 else:
                     time_str = datetime.utcnow().strftime("%Y-%m-%dT%H-%M-%S")
                     out_junk.write(f"{time_str}: {repr(line)}\n")
+        if exists(junk_fname) and getsize(junk_fname) == 0:
+            remove(junk_fname)
