@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
 from datetime import datetime
+import errno
 import sys
+import os
 from os.path import exists, getsize
-from os import remove
+import stat
+from os import mkfifo, remove
 from struct import unpack
 
 import serial
@@ -67,6 +70,24 @@ def process_ubx_message(data):
     return data[offs + payload_size + 8:]
 
 
+def open_pipe(pipe_path):
+    if not exists(pipe_path):
+        mkfifo(pipe_path, 0o0770)
+    elif not stat.S_ISFIFO(os.stat(pipe_path).st_mode):
+        raise ValueError(f"Error: expected FIFO or no file here '{path}', get somethink else")
+    return os.open(pipe_path, os.O_RDONLY | os.O_NONBLOCK)
+
+
+def handle_pipe(ser, fpipe):
+    try:
+        data = os.read(fpipe, 1000000)
+        if data:
+            ser.write(data)
+    except OSError as e:
+        if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
+            raise
+
+
 if __name__=='__main__':
 
     """ NMEA sentence with checksum error (3rd field
@@ -85,11 +106,14 @@ if __name__=='__main__':
         time_str = datetime.utcnow().strftime("%Y-%m-%dT%H-%M-%S")
         log_rotate_timestamp = datetime.utcnow().timestamp() + LOG_ROTATE_SEC
         junk_fname = out_fname + f"{time_str}_junk.txt"
+        pipe_path = out_fname + "gps_serial_port_in"
+        fpipe = open_pipe(pipe_path)
         with open(out_fname + f"{time_str}_nmea.txt", "wt") as out_nmea, \
                 open(junk_fname, "wt") as out_junk:
             while True:
                 if datetime.utcnow().timestamp() >= log_rotate_timestamp:
                     break
+                handle_pipe(ser, fpipe)
                 data += ser.read(ser.in_waiting or 1)
                 if UBX_SYNC in data:
                     data = process_ubx_message(data)
