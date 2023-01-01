@@ -2,13 +2,15 @@
 
 from datetime import datetime
 import sys
-from os.path import getsize
+from os.path import exists, getsize
 from os import remove
+from struct import unpack
 
 import serial
 
 
 LOG_ROTATE_SEC = 60*60*6
+UBX_SYNC = b'\xb5\x62'
 
 
 def log(text):
@@ -29,6 +31,40 @@ def validate(sentence):
         log(f"ERR: Invalid computed checksum {exp}, expected {cksum}")
         return False
     return True
+
+
+def process_ubx_message(data):
+    offs = data.find(UBX_SYNC)
+    msg = data[offs:]
+    if len(msg) < 8:
+        return data
+    _, msg_class, msg_id, payload_size = unpack('<HBBH', msg[:6])
+    if payload_size + 8 > len(msg):
+        return data
+    msg = msg[:8 + payload_size]
+    msg_ck_a, msg_ck_b = msg[-2:]
+    ck_a = ck_b = 0
+    for b in msg[2:-2]:
+        ck_a += b
+        ck_b += ck_a
+    ck_a &= 0xff
+    ck_b &= 0xff
+    if msg_ck_a != ck_a or msg_ck_b != ck_b:
+        log(f'Invalid UBX message {msg.hex(" ")} / {repr(msg)}')
+        return data[offs + 2:]
+    MSG_CLASS_NAME = {
+        0x01: 'NAV',
+        0x02: 'RMX',
+        0x04: 'INF',
+        0x05: 'ACK',
+        0x06: 'CFG',
+        0x0A: 'MON',
+        0x0B: 'AID',
+        0x0D: 'TIM',
+    }
+    log(f'UBX message: {MSG_CLASS_NAME[msg_class]} 0x{msg_class:02X} 0x{msg_id:02X}    {msg[6:-2].hex(" ")}')
+
+    return data[offs + payload_size + 8:]
 
 
 if __name__=='__main__':
@@ -55,6 +91,8 @@ if __name__=='__main__':
                 if datetime.utcnow().timestamp() >= log_rotate_timestamp:
                     break
                 data += ser.read(ser.in_waiting or 1)
+                if UBX_SYNC in data:
+                    data = process_ubx_message(data)
                 if not b'\n' in data:
                     continue
                 line, data = data.split(b'\n', 1)
