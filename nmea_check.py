@@ -36,6 +36,16 @@ def validate(sentence):
     return True
 
 
+def ubx_msg_cksum(data):
+    ck_a = ck_b = 0
+    for b in data:
+        ck_a += b
+        ck_b += ck_a
+    ck_a &= 0xff
+    ck_b &= 0xff
+    return ck_a, ck_b
+
+
 def process_ubx_message(data):
     offs = data.find(UBX_SYNC)
     msg = data[offs:]
@@ -46,12 +56,7 @@ def process_ubx_message(data):
         return data
     msg = msg[:8 + payload_size]
     msg_ck_a, msg_ck_b = msg[-2:]
-    ck_a = ck_b = 0
-    for b in msg[2:-2]:
-        ck_a += b
-        ck_b += ck_a
-    ck_a &= 0xff
-    ck_b &= 0xff
+    ck_a, ck_b = ubx_msg_cksum(msg[2:-2])
     if msg_ck_a != ck_a or msg_ck_b != ck_b:
         log(f'Invalid UBX message {msg.hex(" ")} / {repr(msg)}')
         return data[offs + 2:]
